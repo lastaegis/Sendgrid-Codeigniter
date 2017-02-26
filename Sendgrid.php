@@ -30,7 +30,6 @@ class Sendgrid
     {
         Sendgrid::$endPoint     = 'https://api.sendgrid.com/v3/mail/send';
         Sendgrid::$token        = $param['token'];
-//        Sendgrid::$senderEmail  = $param['sender_email'];
         Sendgrid::$senderEmail  = $param['sender_email'];
         Sendgrid::$senderName   = $param['sender_name'];
         Sendgrid::$enableDebug  = $param['debug'];
@@ -47,18 +46,11 @@ class Sendgrid
 
     /**
      * Digunakan untuk menambahkan penerima email
-     * @param $reciverEmail
+     * @param String $reciverEmail
      */
     public function to($reciverEmail)
     {
-        if(array($reciverEmail))
-        {
-
-        }
-        else
-        {
-            Sendgrid::$reciverEmail = $reciverEmail;
-        }
+        Sendgrid::$reciverEmail = $reciverEmail;
     }
 
     /**
@@ -114,9 +106,9 @@ class Sendgrid
             'personalizations' => array(
                 array(
                     'to' => array(
-
+                        Sendgrid::_checkEmailDestination()
                     ),
-                    'subject'   => 'Test Email'
+                    'subject'   => Sendgrid::$emailSubject
                 )
             ),
             'from'  => array(
@@ -135,31 +127,52 @@ class Sendgrid
     /**
      * Digunakan untuk melakukan pengecekan apakah tujuan email hanya satu atau banyak
      * Dan melakukan validasi apakah format email tujuan sudah sesuai atau belum
+     *
+     * ToDo:
+     * 1. Email Bulk
      */
     private function _checkEmailDestination()
     {
-        if(array(Sendgrid::$reciverEmail))
+        $return = "";
+        if(is_array(Sendgrid::$reciverEmail))
         {
-
+            foreach (Sendgrid::$reciverEmail as $reciver)
+            {
+                if(!is_array($return))
+                {
+                    $return[] = array(
+                        'email' => $reciver
+                    );
+                }
+                else
+                {
+                    $nextEmail = array(
+                        'email' => $reciver
+                    );
+                    array_push($return, $nextEmail);
+                }
+            }
         }
         else
         {
             if(filter_var(Sendgrid::$reciverEmail, FILTER_VALIDATE_EMAIL))
             {
-                return array(
+                $return = array(
                     'email' => Sendgrid::$reciverEmail
                 );
             }
             else
             {
-                return json_encode(
+                $return = json_encode(
                     array(
                         'error_code'    => 301,
-                        'error_message' => 'reciver Email not well formated'
+                        'error_message' => 'Reciver Email not well formated'
                     )
                 );
             }
         }
+
+        return $return;
     }
 
     /**
