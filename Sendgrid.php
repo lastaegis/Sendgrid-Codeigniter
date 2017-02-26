@@ -21,6 +21,8 @@ class Sendgrid
     private static $enableDebug;
     private static $locationForDebug;
     private static $bulkEmail;
+    private static $bodyEmail;
+    private static $bodyTypeEmail;
 
     /**
      * Used for initial configurations
@@ -70,16 +72,27 @@ class Sendgrid
     }
 
     /**
+     * Digunakan untuk memberikan isi pada email body
+     * @param string $body
+     * @param string $bodyType
+     */
+    public function body($body, $bodyType = 'text/html')
+    {
+        Sendgrid::$bodyEmail        = $body;
+        Sendgrid::$bodyTypeEmail    = $bodyType;
+    }
+
+    /**
      * Digunakan untuk melakukan pengiriman Email
      */
-    public function sendEmail()
+    public function send()
     {
         $ch = curl_init();
 
         $curl_options = array(
             CURLOPT_URL             => Sendgrid::$endPoint,
             CURLOPT_HTTPHEADER      => array(
-                'Authorization: Bearer '.Sendgrid::$endPoint,
+                'Authorization: Bearer '.Sendgrid::$token,
                 'Content-Type: application/json'
             ),
             CURLOPT_RETURNTRANSFER  => 1,
@@ -100,7 +113,7 @@ class Sendgrid
     /**
      * Digunakan untuk melakukan JSON Parse terhadap seluruh data yang diterima
      */
-    public function parseJSON()
+    private function _parseJSON()
     {
         $dataJson = array(
             'personalizations' => array(
@@ -116,8 +129,8 @@ class Sendgrid
             ),
             'content'   => array(
                 array(
-                    'type'  => 'Text/plain',
-                    'value' => 'Hello World!'
+                    'type'  => Sendgrid::$bodyTypeEmail,
+                    'value' => Sendgrid::$bodyEmail
                 )
             )
         );
